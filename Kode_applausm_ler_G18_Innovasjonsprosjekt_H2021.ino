@@ -1,4 +1,4 @@
-#include <Servo.h> //Bibliotek for kontroll av servo
+ #include <Servo.h> //Bibliotek for kontroll av servo
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 //--------------------------------Applausmeter
@@ -8,6 +8,7 @@ Servo servo1;
 #define LedP2 19
 #define LedP3 21
 #define LedP4 22
+#define PaAvBryter 35
 
 //-------------------------------------------
 //--------------------------------Lydmåler
@@ -86,31 +87,34 @@ void loop() {
   Serial.print(dbValue,1);
   Serial.println(" dBA");
   //-----------------------------------------------------------------------------------------Applausmeter
+  Serial.println(analogRead(PaAvBryter));
+  if (analogRead(PaAvBryter) > 3000){
   float dBToRadians,ServoChange,ServoPos; 
   dBToRadians = (dbValue-LowerDbLimit)*180/(UpperDbLimit - LowerDbLimit); //formel for dB til radianer
   servo1.write((180.0-dBToRadians));
+  delay(2000);  
   float Quadrant;
   Quadrant = (UpperDbLimit-LowerDbLimit)/4; //Tall som tilsvarer den kvantifiserte endringen i desibelmåling som kreves for at posisjonen på servomotoren skal endre sin posisjon med 45 grader. Dvs. endringen for å endre kvradrant i halvsirkelen.
   
-  if (Quadrant*3+UpperDbLimit <= dbValue){//skrur på alle led om målt desibel er høyt nok
+  if (Quadrant*3+LowerDbLimit <= dbValue){//skrur på alle led om målt desibel er høyt nok
      digitalWrite(LedP4, HIGH); 
      digitalWrite(LedP3, HIGH);
      digitalWrite(LedP2, HIGH);
      digitalWrite(LedP1, HIGH);
   }
-  else if (Quadrant*2+UpperDbLimit <= dbValue){//skrur på 3/4 av alle led.
+  else if (Quadrant*2+LowerDbLimit <= dbValue){//skrur på 3/4 av alle led.
      digitalWrite(LedP4, LOW); 
      digitalWrite(LedP3, HIGH);
      digitalWrite(LedP2, HIGH);
      digitalWrite(LedP1, HIGH);
   }
-  else if (Quadrant+UpperDbLimit <= dbValue){//Skrur på 2/4 av alle led.
+  else if (Quadrant+LowerDbLimit <= dbValue){//Skrur på 2/4 av alle led.
      digitalWrite(LedP4, LOW); 
      digitalWrite(LedP3, LOW);
      digitalWrite(LedP2, HIGH);
      digitalWrite(LedP1, HIGH);
   }
-  else if (UpperDbLimit <= dbValue){//Skrur på 1/4 av alle led.
+  else if (LowerDbLimit <= dbValue){//Skrur på 1/4 av alle led.
      digitalWrite(LedP4, LOW); 
      digitalWrite(LedP3, LOW);
      digitalWrite(LedP2, LOW);
@@ -122,7 +126,7 @@ void loop() {
      digitalWrite(LedP2, LOW);
      digitalWrite(LedP1, LOW);
   }
- 
+  }
  
  
   //-----------------------------------------------------------------------------------------Database
@@ -131,12 +135,12 @@ void loop() {
   
   counter = counter + 1;
   
-  if (counter = 3){
+  if (counter = 10){
     sendData(dbValue); //--> Kaller på funksjonen "sendata" og sender verdien dBValue. 
     counter = 0;
   }
   
-  delay(1000);  
+  delay(100);  
   
 
   
