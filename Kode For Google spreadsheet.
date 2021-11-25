@@ -1,0 +1,38 @@
+function doGet(e) { 
+  Logger.log( JSON.stringify(e) );
+  var result = 'Ok';
+  if (e.parameter == 'undefined') {                                                                                             //Sjekker om dataen er definert
+    result = 'No Parameters';
+  }
+  else {
+    var sheet_id = '1Q3YrWmSddvNVuJ27ccb2sP1vg9hZXvhLCXYqoL22c4Y'; 	                // Spreadsheet ID
+    var sheet = SpreadsheetApp.openById(sheet_id).getActiveSheet();                                   // Åpner Google Sheets med ID-en over.
+    var newRow = sheet.getLastRow() + 1;						                                                                  // Finner neste rad i dokumentet hvor data skal skrives 
+    var rowData = [];
+    var Curr_Date = new Date();
+    rowData[0] = Curr_Date;                                                                                                     // Skriver dato til kolonne A
+    Curr_Date.setHours(Curr_Date.getHours()-6);
+    var Curr_Time = Utilities.formatDate(Curr_Date, "Europe/Oslo", 'HH:mm:ss');
+    rowData[1] = Curr_Time;                                                                    // Skriver tid til kolonne B
+    for (var param in e.parameter) {
+      Logger.log('In for loop, param=' + param);
+      var value = stripQuotes(e.parameter[param]);
+      Logger.log(param + ':' + e.parameter[param]);
+      switch (param) {
+        case 'decibel':
+          rowData[2] = value;                                                                                                        // Skriver desibelmålinger til kolonne C
+          result = 'decibel Written on column C'; 
+          break; 
+        default:
+          result = "unsupported parameter";
+      }
+    }
+    Logger.log(JSON.stringify(rowData));
+    var newRange = sheet.getRange(newRow, 1, 1, rowData.length);
+    newRange.setValues([rowData]);
+  }
+  return ContentService.createTextOutput(result);                                                                    // Returnerer verdiene som skal skrives til Google Sheets
+}
+function stripQuotes( value ) {
+  return value.replace(/^["']|['"]$/g, "");
+}
